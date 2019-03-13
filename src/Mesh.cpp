@@ -13,12 +13,14 @@
 using namespace std;
 using namespace Eigen;
 
-extern PetscErrorCode FormFunction(SNES,Vec,Vec,void*);
-extern PetscErrorCode FormJacobian(SNES,Vec,Mat,Mat,void*);
+extern PetscErrorCode FormFunction(SNES,Vec,Vec,void*); // functional residual for SNES
+extern PetscErrorCode FormJacobian(SNES,Vec,Mat,Mat,void*); // jacobian for SNES
 
 // constructor
 Mesh::Mesh(string& fileName) : meshFileName(fileName) {
 	readMesh();
+
+ 	// generate mesh-vector
 	for (size_t i = 0; i < static_cast<size_t>(elements.size()); i++) {
 		const Node n1(elements[i][0], nodes[elements[i][0]][0], nodes[elements[i][0]][1]);
 		const Node n2(elements[i][1], nodes[elements[i][1]][0], nodes[elements[i][1]][1]);
@@ -31,6 +33,7 @@ Mesh::Mesh(string& fileName) : meshFileName(fileName) {
 	for (vector<Element>::iterator it = mesh.begin(); it != mesh.end(); it++) 
 		it->calcElementStiffness();  
 	
+	// initialize PETSc containers
 	MatCreate(PETSC_COMM_WORLD,&J);
     MatSetSizes(J,PETSC_DECIDE,PETSC_DECIDE,nodes.size(),nodes.size());
     MatSetUp(J);
@@ -43,6 +46,7 @@ Mesh::Mesh(string& fileName) : meshFileName(fileName) {
     VecDuplicate(x,&r);
     VecDuplicate(x,&sol);
        
+    
     array<int, 3> nodeIDs;
     array<array<double, 2>, 3> elemCoords;
     
@@ -153,6 +157,7 @@ void Mesh::Assemble() {
     //MatView(J,PETSC_VIEWER_STDOUT_SELF);		
 }
 
+// define SNES context and solve nonlinear functional defined by 'FormFunction' and 'FormJacobian' (defined below)
 void Mesh::Solve() {
     PetscReal norm, tol = 1.e-14;      
     SNESCreate(PETSC_COMM_WORLD,&snes);
@@ -179,6 +184,7 @@ vector<Element>& Mesh::getGrid() {
 	return mesh;
 }
 
+// return Jacobian reference
 Mat& Mesh::getJac() {
 	//MatView(J,PETSC_VIEWER_STDOUT_SELF);     
     return J;
@@ -218,6 +224,7 @@ void Mesh::setR(Vec& r_iter) {
 //	VecView(r,PETSC_VIEWER_STDOUT_SELF); 
 }
 
+// write field-data to file
 void Mesh::writeField(const string& solName) {
       ofstream outFile;           
       stringstream ss;
@@ -249,7 +256,7 @@ Mesh::~Mesh() {
 }
 
 
-// residual calculation
+// residual calculation (takes in solution at a given SNES iteration and returns the value of the residual (RHS) of the system at that iteration)
 PetscErrorCode FormFunction(SNES snes,Vec x,Vec f,void* meshPtr) {	
 	PetscErrorCode ier;
     Mesh* mPtr = (Mesh*) meshPtr;
@@ -350,7 +357,7 @@ PetscErrorCode FormFunction(SNES snes,Vec x,Vec f,void* meshPtr) {
     //iter++;
 }
 
-// Jacobian 
+// Jacobian (computed in 'FormFunction' itself - so no additional implementation necessary)
 PetscErrorCode FormJacobian(SNES snes,Vec x,Mat jac,Mat B,void* meshPtr){	
 	return 0;   
 }

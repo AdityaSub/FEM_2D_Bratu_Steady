@@ -15,8 +15,8 @@ public:
         ~Basis(); // destructor
 
 private:
-	Eigen::Matrix<double, 3, 2> dNdE = Eigen::ArrayXXd::Zero(3,2);
-	Eigen::Matrix<double, 2, 2> dEdX = Eigen::ArrayXXd::Zero(2,2);
-	std::array<std::array<double, 2>, 3> coords;
-	double detJ;
+	Eigen::Matrix<double, 3, 2> dNdE = Eigen::ArrayXXd::Zero(3,2); // basis derivatives in isoparametric space
+	Eigen::Matrix<double, 2, 2> dEdX = Eigen::ArrayXXd::Zero(2,2); // mapping (inverse) between global and local
+	std::array<std::array<double, 2>, 3> coords; // coordinates for basis for current element
+	double detJ; // element Jacobian determinant
 };

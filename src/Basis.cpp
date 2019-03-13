@@ -5,6 +5,7 @@
 using namespace std;
 using namespace Eigen;
 
+// initialize coordinates, and Jacobian transformations for element
 Basis::Basis(const Node& N1, const Node& N2, const Node& N3) {// : coords{ N1.getCoord(), N2.getCoord(), N3.getCoord() }
 	coords[0] = N1.getCoord();
 	coords[1] = N2.getCoord();
@@ -17,6 +18,7 @@ Basis::Basis(const Node& N1, const Node& N2, const Node& N3) {// : coords{ N1.ge
 	calcDEDX();	
 }
 
+// return value of basis functions at any given point (isoparametric)
 array<double, 3> Basis::calcBasis(const double& xi , const double& eta) {
 	array<double, 3> basis_values;
 	basis_values[0] = 1 - xi - eta;
@@ -25,11 +27,13 @@ array<double, 3> Basis::calcBasis(const double& xi , const double& eta) {
 	return basis_values;
 }
 
+// return basis derivative values 
 Matrix<double, 3, 2> Basis::calcBasisDer() {
 	Matrix<double, 3, 2> basis_der_values = dNdE * dEdX;
 	return basis_der_values;
 }
 
+// calculate mapping, local to global system
 void Basis::calcDEDX() {	
 	dEdX(0, 0) = (coords[2][1] - coords[0][1]) / detJ;
 	dEdX(0, 1) = (coords[0][0] - coords[2][0]) / detJ;
@@ -37,10 +41,12 @@ void Basis::calcDEDX() {
 	dEdX(1, 1) = (coords[1][0] - coords[0][0]) / detJ;
 }
 
+// calculate Jacobian determinant for current element
 void Basis::calcDetJ() {	
         detJ = (coords[1][0] - coords[0][0]) * (coords[2][1] - coords[0][1]) - (coords[1][1] - coords[0][1]) * (coords[2][0] - coords[0][0]);
 }
 
+// return Jacobian determinant
 const double Basis::getDetJ() {
 	return detJ;
 }
